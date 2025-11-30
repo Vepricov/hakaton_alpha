@@ -28,3 +28,4 @@ catboost_info/
 .idea/
 *.swp
 *.swo
+app.py.backup

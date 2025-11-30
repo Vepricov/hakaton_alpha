@@ -232,16 +232,19 @@ def train_transformer_embedder(args):
     print("\n3. Создание FT-Transformer...")
     from model import FTTransformer, WeightedMAELoss
 
-    model = FTTransformer(
-        n_num_features=feature_info['n_num_features'],
-        cat_cardinalities=feature_info['cat_cardinalities'] if feature_info['n_cat_features'] > 0 else [],
-        d_token=args.d_token,
-        n_layers=args.n_layers,
-        n_heads=args.n_heads,
-        d_ffn=args.d_ffn,
-        dropout=0.2,  # Увеличенный dropout
-        attention_dropout=0.3  # Увеличенный attention dropout
-    ).to(device)
+    # Сохраняем конфигурацию модели
+    model_config = {
+        'n_num_features': feature_info['n_num_features'],
+        'cat_cardinalities': feature_info['cat_cardinalities'] if feature_info['n_cat_features'] > 0 else [],
+        'd_token': args.d_token,
+        'n_layers': args.n_layers,
+        'n_heads': args.n_heads,
+        'd_ffn': args.d_ffn,
+        'dropout': 0.2,
+        'attention_dropout': 0.3
+    }
+
+    model = FTTransformer(**model_config).to(device)
 
     print(f"   Параметров: {sum(p.numel() for p in model.parameters()):,}")
 
@@ -311,7 +314,7 @@ def train_transformer_embedder(args):
     embedder = FTTransformerEmbedder(model)
     embedder.eval()
 
-    return embedder, device, feature_info, encoders, scaler, X_num_full, X_cat_full, y_full, weights_full
+    return embedder, device, feature_info, encoders, scaler, X_num_full, X_cat_full, y_full, weights_full, model_config
 
 
 def train_catboost_on_embeddings(embedder, device, feature_info, X_num, X_cat, y, weights, args):
@@ -353,9 +356,9 @@ def train_catboost_on_embeddings(embedder, device, feature_info, X_num, X_cat, y
     val_pool = Pool(X_val, y_val, weight=w_val)
 
     model = CatBoostRegressor(
-        iterations=2000,
+        iterations=5000,
         learning_rate=0.03,
-        depth=6,
+        depth=10,
         l2_leaf_reg=3,
         loss_function='RMSE',
         eval_metric='MAE',
@@ -463,7 +466,7 @@ def generate_submission(embedder, catboost_model, device, feature_info, encoders
 
 
 def save_hybrid_model(embedder, catboost_model, feature_info, encoders, scaler,
-                      n_embeddings, output_path):
+                      n_embeddings, output_path, model_config=None):
     """Сохранение гибридной модели"""
     print("\n6. Сохранение модели...")
 
@@ -473,8 +476,16 @@ def save_hybrid_model(embedder, catboost_model, feature_info, encoders, scaler,
         'feature_info': feature_info,
         'encoders': encoders,
         'scaler': scaler,
-        'n_embeddings': n_embeddings
+        'n_embeddings': n_embeddings,
+        'model_config': model_config
     }, output_path.replace('.cbm', '_embedder.pth'))
+
+    # Сохраняем конфигурацию модели в JSON для легкой загрузки
+    if model_config:
+        config_path = output_path.replace('.cbm', '_config.json')
+        with open(config_path, 'w') as f:
+            json.dump(model_config, f, indent=2)
+        print(f"   ✓ Config: {config_path}")
 
     # Сохраняем CatBoost
     catboost_model.save_model(output_path)
@@ -496,7 +507,7 @@ def main(args):
     print("="*80)
 
     # Этап 1: Обучение трансформера для эмбеддингов
-    embedder, device, feature_info, encoders, scaler, X_num, X_cat, y, weights = \
+    embedder, device, feature_info, encoders, scaler, X_num, X_cat, y, weights, model_config = \
         train_transformer_embedder(args)
 
     # Этап 2: Обучение CatBoost на эмбеддингах
@@ -514,7 +525,7 @@ def main(args):
     # Сохранение модели
     save_hybrid_model(
         embedder, catboost_model, feature_info, encoders, scaler,
-        n_embeddings, args.model_path
+        n_embeddings, args.model_path, model_config
     )
 
     print("\n" + "="*80)
