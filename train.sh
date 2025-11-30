@@ -58,13 +58,13 @@ echo ""
 export CUDA_VISIBLE_DEVICES=2
 python train_hybrid.py \
     --model_path hybrid_model.cbm \
-    --transformer_epochs 10 \
+    --transformer_epochs 20 \
     --batch_size 256 \
     --learning_rate 1e-4 \
     --d_token 192 \
-    --n_layers 10 \
+    --n_layers 8 \
     --n_heads 8 \
-    --d_ffn 1024 \
+    --d_ffn 200 \
     --train_path hackathon_income_train.csv \
     --test_path hackathon_income_test.csv \
     --submission_path submission_hybrid.csv \

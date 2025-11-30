@@ -1,6 +1,6 @@
 """
 Flask веб-приложение для гибридной модели (FT-Transformer + CatBoost)
-Включает выбор клиента по ID из тестовой выборки
+С визуализацией важности признаков и интерпретацией факторов влияния
 Дизайн в стиле Альфа-Банка
 """
 
@@ -9,11 +9,17 @@ import json
 import numpy as np
 import pandas as pd
 import torch
+import matplotlib
+matplotlib.use('Agg')  # Для серверного рендеринга
+import matplotlib.pyplot as plt
+import io
+import base64
 from flask import Flask, render_template, request, jsonify
 from catboost import CatBoostRegressor
+import catboost
 
 from model import FTTransformer
-from train_hybrid import FTTransformerEmbedder, preprocess_data, USELESS_FEATURES
+from train_hybrid import FTTransformerEmbedder, preprocess_data
 
 app = Flask(__name__)
 
@@ -25,11 +31,13 @@ feature_info = None
 encoders = None
 scaler = None
 test_data = None
+feature_names_combined = None
+feature_descriptions = None
 
 
 def load_hybrid_model(embedder_path='hybrid_model_embedder.pth', catboost_path='hybrid_model.cbm'):
     """Загрузка гибридной модели"""
-    global embedder, catboost_model, device, feature_info, encoders, scaler
+    global embedder, catboost_model, device, feature_info, encoders, scaler, feature_names_combined, feature_descriptions
 
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
@@ -42,19 +50,16 @@ def load_hybrid_model(embedder_path='hybrid_model_embedder.pth', catboost_path='
 
     # Загружаем конфигурацию модели
     if 'model_config' in checkpoint and checkpoint['model_config'] is not None:
-        # Используем сохраненную конфигурацию
         model_config = checkpoint['model_config']
-        print(f"✓ Загружена конфигурация модели из checkpoint")
+        print("✓ Загружена конфигурация модели из checkpoint")
     else:
-        # Пробуем загрузить из JSON файла
         config_path = embedder_path.replace('_embedder.pth', '_config.json')
         if os.path.exists(config_path):
             with open(config_path, 'r') as f:
                 model_config = json.load(f)
             print(f"✓ Загружена конфигурация модели из {config_path}")
         else:
-            # Fallback: определяем из state_dict
-            print(f"⚠️  Конфигурация не найдена, определяю из state_dict...")
+            print("⚠️  Конфигурация не найдена, определяю из state_dict...")
             state_dict = checkpoint['embedder_state_dict']
             max_layer = max([int(k.split('.')[1]) for k in state_dict.keys() if 'transformer_blocks.' in k])
             n_embeddings = checkpoint.get('n_embeddings', 192)
@@ -70,7 +75,7 @@ def load_hybrid_model(embedder_path='hybrid_model_embedder.pth', catboost_path='
                 'attention_dropout': 0.3
             }
 
-    # Создаем базовую FT-Transformer модель с правильной конфигурацией
+    # Создаем базовую FT-Transformer модель
     base_model = FTTransformer(**model_config).to(device)
 
     # Оборачиваем в embedder и загружаем веса
@@ -82,11 +87,23 @@ def load_hybrid_model(embedder_path='hybrid_model_embedder.pth', catboost_path='
     catboost_model = CatBoostRegressor()
     catboost_model.load_model(catboost_path)
 
-    print(f"✓ Гибридная модель загружена")
+    # Создаем имена признаков
+    feature_names_combined = feature_info['num_feature_names'] + [f'embedding_{i}' for i in range(model_config['d_token'])]
+
+    print("✓ Гибридная модель загружена")
     print(f"  Embedder: {embedder_path}")
     print(f"  CatBoost: {catboost_path}")
     print(f"  Устройство: {device}")
     print(f"  Архитектура: {model_config['n_layers']} layers, {model_config['d_token']} d_token")
+
+    # Загружаем описания признаков
+    try:
+        desc_df = pd.read_csv('features_description.csv', sep=';', encoding='cp1251')
+        feature_descriptions = dict(zip(desc_df.iloc[:, 0], desc_df.iloc[:, 1]))
+        print(f"✓ Загружено описаний признаков: {len(feature_descriptions)}")
+    except Exception as e:
+        print(f"⚠️  Не удалось загрузить описания признаков: {e}")
+        feature_descriptions = {}
 
 
 def load_test_data(test_path='hackathon_income_test.csv'):
@@ -97,15 +114,14 @@ def load_test_data(test_path='hackathon_income_test.csv'):
     print(f"✓ Тестовая выборка загружена: {len(test_data)} записей")
 
 
-def predict_income(client_data):
+def predict_income_with_explanation(client_data):
     """
-    Предсказание дохода для клиента
-
-    Args:
-        client_data: dict с данными клиента
+    Предсказание дохода для клиента с объяснением
 
     Returns:
-        predicted_income: float, предсказанный доход
+        predicted_income: float
+        top_features: dict с важностью признаков
+        explanation: текстовое объяснение
     """
     if embedder is None or catboost_model is None:
         raise ValueError("Модель не загружена!")
@@ -114,32 +130,26 @@ def predict_income(client_data):
     df = pd.DataFrame([client_data])
 
     # Выравниваем колонки с обучающей выборкой
-    # Добавляем недостающие числовые признаки (но НЕ затираем существующие!)
     for feature in feature_info['num_feature_names']:
         if feature not in df.columns:
-            # Добавляем отсутствующий признак
             df[feature] = 0.0
         elif df[feature].dtype == 'object':
-            # Конвертируем object в числовой тип
             df[feature] = pd.to_numeric(df[feature], errors='coerce').fillna(0).astype(float)
         else:
-            # Просто заполняем NaN нулями, остальное оставляем как есть
             df[feature] = df[feature].fillna(0).astype(float)
 
-    # Добавляем недостающие категориальные признаки
     for feature in feature_info['cat_feature_names']:
         if feature not in df.columns:
             df[feature] = "MISSING"
         else:
             df[feature] = df[feature].fillna("MISSING").astype(str)
 
-    # Удаляем target и w если они есть (чтобы не мешали)
     df = df.drop(columns=['target', 'w'], errors='ignore')
 
-    # Предобработка с is_train=False (чтобы использовать переданный scaler)
+    # Предобработка
     X_num, X_cat, _, _, _, _, _ = preprocess_data(
         df,
-        is_train=False,  # False чтобы использовать переданный scaler
+        is_train=False,
         encoders=encoders,
         scaler=scaler,
         cat_feature_names=feature_info['cat_feature_names']
@@ -160,13 +170,235 @@ def predict_income(client_data):
     prediction = np.expm1(prediction_log)
     prediction = max(0, prediction)
 
-    return prediction
+    # Получаем SHAP values для конкретного клиента (локальная важность)
+    try:
+        shap_values = catboost_model.get_feature_importance(
+            type='ShapValues',
+            data=catboost.Pool(X_combined)
+        )
+        # shap_values возвращает матрицу [n_samples, n_features + 1]
+        # Последний элемент - это базовое значение (bias)
+        # Берем абсолютные значения для первого (единственного) примера
+        client_shap = np.abs(shap_values[0, :-1])
+
+        # Берем только числовые признаки (без эмбеддингов)
+        num_features_count = len(feature_info['num_feature_names'])
+        client_shap_num = client_shap[:num_features_count]
+
+    except Exception as e:
+        print(f"Warning: Could not get SHAP values, using global importance: {e}")
+        # Fallback на глобальную важность
+        feature_importance = catboost_model.get_feature_importance()
+        client_shap_num = feature_importance[:len(feature_info['num_feature_names'])]
+
+    # Находим топ-10 наиболее важных признаков для ЭТОГО клиента
+    top_features_indices = np.argsort(client_shap_num)[-10:][::-1]
+
+    # Берем важности только топ-признаков для нормализации
+    top_importances = client_shap_num[top_features_indices]
+    importance_sum = top_importances.sum()
+
+    # Защита от деления на ноль
+    if importance_sum == 0:
+        importance_sum = 1.0
+
+    top_features = []
+    for idx in top_features_indices:
+        feature_name = feature_info['num_feature_names'][idx]
+        importance = client_shap_num[idx]
+        value = X_num[0, idx]
+
+        # Получаем исходное значение (до нормализации) если возможно
+        original_value = client_data.get(feature_name, value)
+
+        # Безопасная конвертация original_value с обработкой NaN
+        if isinstance(original_value, (int, float)):
+            if np.isnan(original_value):
+                original_value_safe = 0.0
+            else:
+                original_value_safe = float(original_value)
+        else:
+            original_value_safe = str(original_value)
+
+        # Генерируем пояснение для признака
+        explanation = generate_feature_explanation(feature_name, original_value_safe)
+
+        top_features.append({
+            'name': feature_name,
+            'importance': float(importance),
+            'value': float(value) if not np.isnan(value) else 0.0,
+            'original_value': original_value_safe,
+            'normalized_importance': float(importance / importance_sum * 100),
+            'explanation': explanation
+        })
+
+    return prediction, top_features
+
+
+def generate_feature_explanation(feature_name, value):
+    """Генерация пояснения для конкретного признака"""
+
+    # Сначала пытаемся получить описание из загруженного словаря
+    if feature_descriptions and feature_name in feature_descriptions:
+        description = feature_descriptions[feature_name]
+        # Добавляем контекстное пояснение на основе значения
+        context = get_context_explanation(feature_name, value)
+        if context:
+            return f"{description}. {context}"
+        return description
+
+    # Fallback на базовые описания
+    feature_display_names = {
+        'Age': 'Возраст клиента',
+        'age': 'Возраст клиента',
+        'education': 'Уровень образования',
+        'work_experience': 'Стаж работы',
+        'salary': 'Текущая зарплата',
+        'income': 'Текущий доход',
+        'loan_amount': 'Сумма кредита',
+        'credit_score': 'Кредитный рейтинг',
+        'num_credits': 'Количество кредитов',
+        'employment_type': 'Тип занятости',
+    }
+
+    display_name = feature_display_names.get(feature_name, feature_name.replace('_', ' ').title())
+
+    # Контекстные пояснения
+    context = get_context_explanation(feature_name, value)
+    if context:
+        return f"{display_name}. {context}"
+
+    # Общее пояснение
+    return f"{display_name}. Важный фактор для прогнозирования уровня дохода."
+
+
+def get_context_explanation(feature_name, value):
+    """Получить контекстное пояснение на основе значения признака"""
+
+    if 'age' in feature_name.lower():
+        try:
+            age_val = float(value)
+            if age_val < 25:
+                return "Молодой возраст — начало карьеры, потенциал роста"
+            elif age_val < 35:
+                return "Оптимальный возраст для активного карьерного роста"
+            elif age_val < 50:
+                return "Зрелый возраст — устоявшаяся карьера и стабильный доход"
+            else:
+                return "Опытный профессионал с высокой квалификацией"
+        except:
+            return "Влияет на карьерные возможности и уровень дохода"
+
+    if 'experience' in feature_name.lower() or 'stag' in feature_name.lower():
+        try:
+            exp_val = float(value)
+            if exp_val < 2:
+                return "Небольшой опыт — начальный этап карьеры"
+            elif exp_val < 5:
+                return "Средний опыт работы — развитие профессиональных навыков"
+            elif exp_val < 10:
+                return "Значительный опыт — хорошие карьерные перспективы"
+            else:
+                return "Большой опыт работы значительно повышает доходность"
+        except:
+            return "Опыт работы напрямую влияет на уровень дохода"
+
+    if 'turn' in feature_name.lower() and 'cr' in feature_name.lower():
+        return "Кредитовые обороты отражают активность использования кредитных средств"
+
+    if 'turn' in feature_name.lower() and 'db' in feature_name.lower():
+        return "Дебетовые обороты показывают уровень расходов и финансовую активность"
+
+    if 'salary' in feature_name.lower():
+        return "Усредненная зарплата — ключевой показатель платежеспособности"
+
+    if 'bki' in feature_name.lower() and 'limit' in feature_name.lower():
+        return "Кредитные лимиты из БКИ показывают доверие банков к клиенту"
+
+    if 'payment' in feature_name.lower():
+        return "Платежное поведение характеризует финансовую дисциплину"
+
+    if 'by_category' in feature_name.lower():
+        return "Категории транзакций отражают образ жизни и расходы клиента"
+
+    if 'ils' in feature_name.lower():
+        return "Данные из информационной системы банка о финансовой активности"
+
+    if 'income' in feature_name.lower():
+        return "Подтвержденный доход клиента по данным различных источников"
+
+    if 'credit' in feature_name.lower() or 'cr_' in feature_name.lower():
+        return "Кредитная история и активность по кредитным продуктам"
+
+    if 'debit' in feature_name.lower() or 'db_' in feature_name.lower():
+        return "Операции по дебетовым картам и счетам клиента"
+
+    return None
+
+
+def generate_importance_plot(top_features):
+    """Создание графика важности признаков"""
+    try:
+        # Создаем фигуру
+        fig, ax = plt.subplots(figsize=(12, 7))
+
+        # Берем топ-10 признаков
+        features_to_plot = top_features[:10]
+
+        # Данные для графика
+        names = [f['name'][:25] for f in features_to_plot]  # Обрезаем длинные имена
+        importances = [f['normalized_importance'] for f in features_to_plot]
+
+        # Создаем горизонтальный bar chart
+        y_pos = np.arange(len(names))
+
+        # Цветовая схема от красного к желтому
+        colors = plt.cm.RdYlGn(np.linspace(0.4, 0.9, len(importances)))
+
+        bars = ax.barh(y_pos, importances, color=colors, edgecolor='#333', linewidth=2, height=0.7)
+
+        # Добавляем значения на графике
+        for i, (bar, imp) in enumerate(zip(bars, importances)):
+            width = bar.get_width()
+            ax.text(width + 1.5, bar.get_y() + bar.get_height()/2,
+                   f'{imp:.1f}%',
+                   ha='left', va='center', fontsize=11, fontweight='bold', color='#333')
+
+        ax.set_yticks(y_pos)
+        ax.set_yticklabels(names, fontsize=11)
+        ax.set_xlabel('Важность признака (%)', fontsize=13, fontweight='bold')
+        ax.set_title('Топ-10 факторов, влияющих на прогноз дохода клиента',
+                    fontsize=15, fontweight='bold', pad=20, color='#1A1A1A')
+        ax.set_xlim(0, max(importances) * 1.2)
+
+        # Стилизация в стиле Альфа-Банка
+        ax.spines['top'].set_visible(False)
+        ax.spines['right'].set_visible(False)
+        ax.spines['left'].set_color('#666')
+        ax.spines['bottom'].set_color('#666')
+        ax.grid(axis='x', alpha=0.3, linestyle='--', linewidth=1)
+        ax.set_facecolor('#FAFAFA')
+        fig.patch.set_facecolor('white')
+
+        plt.tight_layout()
+
+        # Конвертируем в base64
+        buf = io.BytesIO()
+        plt.savefig(buf, format='png', dpi=150, bbox_inches='tight', facecolor='white')
+        buf.seek(0)
+        img_base64 = base64.b64encode(buf.read()).decode('utf-8')
+        plt.close(fig)
+
+        return img_base64
+    except Exception as e:
+        print(f"Error generating importance plot: {e}")
+        import traceback
+        traceback.print_exc()
+        return None
 
 
 def generate_financial_offers(predicted_income, client_data):
-    """
-    Генерация персонализированных финансовых предложений
-    """
+    """Генерация персонализированных финансовых предложений"""
     offers = []
 
     # Категоризация дохода
@@ -175,29 +407,33 @@ def generate_financial_offers(predicted_income, client_data):
         max_credit = predicted_income * 3
         max_card_limit = 50000
         deposit_interest = 5.5
+        investment_available = False
     elif predicted_income < 80000:
         income_category = "средний"
         max_credit = predicted_income * 5
         max_card_limit = 150000
         deposit_interest = 6.0
+        investment_available = False
     else:
         income_category = "высокий"
         max_credit = predicted_income * 8
         max_card_limit = 500000
         deposit_interest = 6.5
+        investment_available = True
 
     # Предложение 1: Кредит
     offers.append({
         "type": "Потребительский кредит",
         "title": f"Кредит до {max_credit:,.0f} ₽",
-        "description": f"Персональное предложение для клиентов с доходом {income_category} уровня",
+        "description": f"Персональное предложение для клиентов с {income_category} уровнем дохода",
         "interest_rate": "от 9.9%",
         "term": "до 5 лет",
         "icon": "💰",
         "details": {
             "Максимальная сумма": f"{max_credit:,.0f} ₽",
             "Ежемесячный платеж": f"≈ {max_credit * 0.02:,.0f} ₽",
-            "Решение": "за 1 минуту"
+            "Решение": "за 1 минуту",
+            "Ставка": "от 9.9% годовых"
         }
     })
 
@@ -212,7 +448,8 @@ def generate_financial_offers(predicted_income, client_data):
         "details": {
             "Кредитный лимит": f"до {max_card_limit:,.0f} ₽",
             "Кэшбэк": "до 10% за покупки",
-            "Обслуживание": "0 ₽ при обороте от 10,000 ₽"
+            "Обслуживание": "0 ₽ при обороте от 10,000 ₽",
+            "Льготный период": "100 дней"
         }
     })
 
@@ -233,7 +470,7 @@ def generate_financial_offers(predicted_income, client_data):
     })
 
     # Предложение 4: Инвестиции (для высокого дохода)
-    if predicted_income >= 80000:
+    if investment_available:
         offers.append({
             "type": "Инвестиции",
             "title": "Индивидуальный инвестиционный счет (ИИС)",
@@ -249,6 +486,22 @@ def generate_financial_offers(predicted_income, client_data):
             }
         })
 
+    # Предложение 5: Дебетовая карта с кэшбэком
+    offers.append({
+        "type": "Дебетовая карта",
+        "title": "Альфа-Карта с кэшбэком",
+        "description": "До 10% кэшбэка на категории по выбору",
+        "interest_rate": "бесплатное обслуживание",
+        "term": "бессрочно",
+        "icon": "💎",
+        "details": {
+            "Кэшбэк": "до 10% на категории",
+            "Обслуживание": "0 ₽",
+            "Снятие наличных": "без комиссии в банкоматах партнеров",
+            "Бонусы": "мили за покупки"
+        }
+    })
+
     return offers
 
 
@@ -260,17 +513,15 @@ def index():
 
 @app.route('/predict', methods=['POST'])
 def predict():
-    """API endpoint для предсказания"""
+    """API endpoint для предсказания с объяснением"""
     try:
-        # Получаем данные от клиента
         data = request.json
 
         if not data:
             return jsonify({'error': 'Нет данных'}), 400
 
-        # Проверяем, передан ли ID
+        # Получаем данные клиента
         if 'client_id' in data:
-            # Получаем данные из тестовой выборки
             client_id = int(data['client_id'])
             if test_data is None:
                 return jsonify({'error': 'Тестовая выборка не загружена'}), 500
@@ -278,25 +529,40 @@ def predict():
             if client_id not in test_data['id'].values:
                 return jsonify({'error': f'Клиент с ID {client_id} не найден'}), 404
 
-            # Получаем данные клиента
             client_row = test_data[test_data['id'] == client_id].iloc[0]
             client_data = client_row.to_dict()
         else:
             client_data = data
 
-        # Предсказание дохода
-        predicted_income = predict_income(client_data)
+        # Предсказание дохода с объяснением
+        predicted_income, top_features = predict_income_with_explanation(client_data)
+
+        # Генерация графика важности признаков
+        importance_plot_base64 = generate_importance_plot(top_features)
 
         # Генерация финансовых предложений
         offers = generate_financial_offers(predicted_income, client_data)
 
-        # Формируем ответ
+        # Формируем ответ с безопасной обработкой NaN
+        def safe_json_value(v):
+            """Безопасное преобразование значения для JSON"""
+            if isinstance(v, float) and np.isnan(v):
+                return None
+            elif isinstance(v, (int, float)):
+                return float(v)
+            elif pd.isna(v):
+                return None
+            else:
+                return str(v)
+
         response = {
             'predicted_income': float(predicted_income),
             'predicted_income_formatted': f"{predicted_income:,.0f} ₽",
+            'top_features': top_features,
+            'importance_plot': importance_plot_base64,
             'offers': offers,
-            'model_type': 'Hybrid (FT-Transformer + CatBoost)',
-            'client_data': {k: str(v) for k, v in list(client_data.items())[:10]}  # Первые 10 параметров для отображения
+            'model_type': 'Hybrid Model: FT-Transformer + CatBoost',
+            'client_data': {k: safe_json_value(v) for k, v in list(client_data.items())[:10]}
         }
 
         return jsonify(response)
@@ -321,7 +587,6 @@ def get_client(client_id):
         client_row = test_data[test_data['id'] == client_id].iloc[0]
         client_data = client_row.to_dict()
 
-        # Конвертируем все значения в строки для JSON
         client_data_serializable = {k: str(v) if pd.notna(v) else None for k, v in client_data.items()}
 
         return jsonify(client_data_serializable)
@@ -338,7 +603,6 @@ def get_random_clients():
         if test_data is None:
             return jsonify({'error': 'Тестовая выборка не загружена'}), 500
 
-        # Получаем 10 случайных ID
         random_ids = test_data['id'].sample(n=min(10, len(test_data))).tolist()
 
         return jsonify({
@@ -381,8 +645,7 @@ def create_templates():
     """Создание HTML шаблонов"""
     os.makedirs('templates', exist_ok=True)
 
-    index_html = """
-<!DOCTYPE html>
+    index_html = """<!DOCTYPE html>
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
@@ -397,12 +660,11 @@ def create_templates():
 
         body {
             font-family: 'Segoe UI', Roboto, -apple-system, BlinkMacSystemFont, sans-serif;
-            background: #FFFFFF;
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
             min-height: 100vh;
             color: #1A1A1A;
         }
 
-        /* Header с красным фоном Альфа-Банка */
         .header {
             background: linear-gradient(135deg, #EF3124 0%, #C41E3A 100%);
             color: white;
@@ -445,7 +707,6 @@ def create_templates():
             padding: 0 20px;
         }
 
-        /* Карточки с тенью */
         .card {
             background: white;
             border-radius: 20px;
@@ -460,13 +721,6 @@ def create_templates():
             margin-bottom: 25px;
             font-size: 1.8em;
             font-weight: 600;
-        }
-
-        /* Секция выбора клиента */
-        .client-selector {
-            display: grid;
-            grid-template-columns: 1fr;
-            gap: 20px;
         }
 
         .input-group {
@@ -487,7 +741,7 @@ def create_templates():
             font-size: 0.95em;
         }
 
-        input[type="number"], input[type="text"] {
+        input[type="number"] {
             width: 100%;
             padding: 15px 20px;
             border: 2px solid #E0E0E0;
@@ -503,7 +757,6 @@ def create_templates():
             box-shadow: 0 0 0 4px rgba(239, 49, 36, 0.1);
         }
 
-        /* Кнопки в стиле Альфа-Банка */
         .btn {
             background: linear-gradient(135deg, #EF3124 0%, #C41E3A 100%);
             color: white;
@@ -527,12 +780,6 @@ def create_templates():
             transform: translateY(0);
         }
 
-        .btn:disabled {
-            opacity: 0.6;
-            cursor: not-allowed;
-            transform: none;
-        }
-
         .btn-secondary {
             background: #1A1A1A;
             box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
@@ -543,7 +790,6 @@ def create_templates():
             box-shadow: 0 6px 20px rgba(0, 0, 0, 0.3);
         }
 
-        /* Случайные ID */
         .random-ids {
             display: flex;
             gap: 10px;
@@ -568,7 +814,6 @@ def create_templates():
             box-shadow: 0 4px 10px rgba(239, 49, 36, 0.3);
         }
 
-        /* Информационный блок */
         .info-box {
             background: linear-gradient(135deg, #FFF5F5 0%, #FFE8E8 100%);
             border-left: 4px solid #EF3124;
@@ -585,7 +830,6 @@ def create_templates():
             flex-shrink: 0;
         }
 
-        /* Loader */
         .loader {
             display: none;
             text-align: center;
@@ -616,7 +860,6 @@ def create_templates():
             font-size: 1.1em;
         }
 
-        /* Результаты */
         .result {
             display: none;
         }
@@ -637,7 +880,6 @@ def create_templates():
             }
         }
 
-        /* Отображение дохода */
         .income-display {
             text-align: center;
             padding: 50px 30px;
@@ -690,191 +932,164 @@ def create_templates():
             z-index: 1;
         }
 
-        /* Информация о клиенте */
-        .client-info {
-            background: #F8F8F8;
+        .visualization-section {
+            background: white;
+            padding: 30px;
+            border-radius: 16px;
+            margin-bottom: 30px;
+            text-align: center;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+        }
+
+        .visualization-section h3 {
+            color: #1A1A1A;
+            margin-bottom: 20px;
+            font-size: 1.4em;
+        }
+
+        .importance-plot {
+            max-width: 100%;
+            height: auto;
+            border-radius: 12px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+        }
+
+        .features-list {
+            display: grid;
+            gap: 15px;
+            margin-top: 20px;
+        }
+
+        .feature-item {
+            background: white;
             padding: 20px;
             border-radius: 12px;
-            margin-bottom: 30px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border: 2px solid #F0F0F0;
+            transition: all 0.3s;
         }
 
-        .client-info h3 {
-            margin-bottom: 15px;
+        .feature-item:hover {
+            border-color: #EF3124;
+            transform: translateY(-3px);
+            box-shadow: 0 8px 25px rgba(239, 49, 36, 0.15);
+        }
+
+        .feature-info {
+            flex: 1;
+        }
+
+        .feature-name {
+            font-weight: 700;
             color: #1A1A1A;
+            font-size: 1.1em;
+            margin-bottom: 8px;
         }
 
-        .client-params {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-            gap: 10px;
+        .feature-explanation {
+            color: #555;
+            font-size: 0.95em;
+            line-height: 1.5;
         }
 
-        .param-item {
-            background: white;
-            padding: 10px 15px;
-            border-radius: 8px;
-            font-size: 0.9em;
+        .feature-importance {
+            background: linear-gradient(135deg, #EF3124 0%, #C41E3A 100%);
+            color: white;
+            padding: 10px 20px;
+            border-radius: 25px;
+            font-weight: 700;
+            font-size: 1.15em;
+            min-width: 80px;
+            text-align: center;
+            box-shadow: 0 4px 10px rgba(239, 49, 36, 0.3);
         }
 
-        .param-label {
-            color: #666;
-            font-weight: 500;
-        }
-
-        .param-value {
-            color: #1A1A1A;
-            font-weight: 600;
-            margin-left: 5px;
-        }
-
-        /* Предложения */
-        .offers {
+        .offers-grid {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
             gap: 25px;
+            margin-top: 30px;
         }
 
         .offer-card {
-            background: linear-gradient(135deg, #FFFFFF 0%, #F8F8F8 100%);
+            background: white;
             border-radius: 16px;
             padding: 30px;
-            transition: all 0.3s;
             border: 2px solid #F0F0F0;
-            position: relative;
-            overflow: hidden;
-        }
-
-        .offer-card::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            height: 4px;
-            background: linear-gradient(90deg, #EF3124 0%, #C41E3A 100%);
-            transform: scaleX(0);
-            transition: transform 0.3s;
+            transition: all 0.3s;
+            cursor: pointer;
         }
 
         .offer-card:hover {
-            transform: translateY(-8px);
-            box-shadow: 0 15px 40px rgba(239, 49, 36, 0.15);
+            transform: translateY(-5px);
+            box-shadow: 0 15px 40px rgba(0, 0, 0, 0.12);
             border-color: #EF3124;
         }
 
-        .offer-card:hover::before {
-            transform: scaleX(1);
+        .offer-icon {
+            font-size: 3em;
+            margin-bottom: 15px;
         }
 
-        .offer-icon {
-            font-size: 3.5em;
-            margin-bottom: 15px;
-            display: block;
+        .offer-type {
+            color: #EF3124;
+            font-size: 0.85em;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 10px;
         }
 
         .offer-title {
-            font-size: 1.4em;
+            font-size: 1.3em;
             font-weight: 700;
             color: #1A1A1A;
-            margin-bottom: 12px;
+            margin-bottom: 10px;
         }
 
         .offer-description {
             color: #666;
-            margin-bottom: 15px;
-            line-height: 1.5;
-        }
-
-        .offer-rate {
-            color: #EF3124;
-            font-weight: 700;
-            font-size: 1.1em;
             margin-bottom: 20px;
+            line-height: 1.6;
         }
 
         .offer-details {
-            background: white;
-            padding: 20px;
-            border-radius: 12px;
-            margin-top: 20px;
-            border: 1px solid #E8E8E8;
+            border-top: 1px solid #F0F0F0;
+            padding-top: 20px;
         }
 
-        .offer-detail-item {
+        .detail-row {
             display: flex;
             justify-content: space-between;
-            padding: 10px 0;
-            border-bottom: 1px solid #F0F0F0;
-        }
-
-        .offer-detail-item:last-child {
-            border-bottom: none;
+            margin-bottom: 10px;
+            font-size: 0.95em;
         }
 
         .detail-label {
             color: #666;
-            font-size: 0.9em;
         }
 
         .detail-value {
-            color: #1A1A1A;
             font-weight: 600;
-            text-align: right;
+            color: #1A1A1A;
         }
 
-        /* Error */
-        .error {
-            background: #FFF0F0;
-            color: #C41E3A;
-            padding: 20px;
-            border-radius: 12px;
-            margin-top: 20px;
-            display: none;
-            border-left: 4px solid #EF3124;
-        }
-
-        .error.show {
-            display: block;
-            animation: shake 0.5s;
-        }
-
-        @keyframes shake {
-            0%, 100% { transform: translateX(0); }
-            25% { transform: translateX(-10px); }
-            75% { transform: translateX(10px); }
-        }
-
-        /* Responsive */
         @media (max-width: 768px) {
-            .header {
-                padding: 30px 20px;
+            .input-group {
+                flex-direction: column;
             }
 
             .logo {
                 font-size: 2em;
             }
 
-            .tagline {
-                font-size: 1.1em;
-            }
-
-            .card {
-                padding: 25px;
-            }
-
-            .input-group {
-                flex-direction: column;
-            }
-
-            .btn {
-                width: 100%;
-            }
-
             .income-amount {
                 font-size: 2.5em;
             }
 
-            .offers {
+            .offers-grid {
                 grid-template-columns: 1fr;
             }
         }
@@ -884,201 +1099,225 @@ def create_templates():
     <div class="header">
         <div class="header-content">
             <div class="logo">Альфа-Банк</div>
-            <div class="tagline">AI-прогнозирование доходов клиентов</div>
-            <span class="badge">🚀 Hybrid Model: FT-Transformer + CatBoost</span>
+            <div class="tagline">AI-система прогнозирования доходов клиентов</div>
+            <div class="badge">🤖 Гибридная модель FT-Transformer + CatBoost</div>
         </div>
     </div>
 
     <div class="container">
         <div class="card">
+            <h2>🎯 Прогноз дохода клиента</h2>
+
             <div class="info-box">
-                <div class="info-icon">🎯</div>
+                <div class="info-icon">💡</div>
                 <div>
-                    <strong>Как это работает:</strong> Выберите клиента по ID из тестовой выборки, и наша гибридная модель
-                    (FT-Transformer + CatBoost) предскажет его доход и сформирует персонализированные финансовые предложения.
+                    <strong>Как это работает:</strong> Введите ID клиента из базы данных, и наша AI-модель
+                    спрогнозирует его доход, объяснит факторы влияния и предложит персонализированные финансовые продукты.
                 </div>
             </div>
 
-            <h2>Выберите клиента</h2>
-
-            <form id="predictionForm" class="client-selector">
-                <div class="input-group">
-                    <div class="form-group">
-                        <label for="clientId">🆔 ID клиента</label>
-                        <input type="number" id="clientId" placeholder="Введите ID клиента" required>
-                    </div>
-                    <button type="submit" class="btn" id="submitBtn">
-                        📊 Рассчитать доход
-                    </button>
+            <div class="input-group">
+                <div class="form-group">
+                    <label for="clientId">ID клиента</label>
+                    <input type="number" id="clientId" placeholder="Например: 12345" />
                 </div>
-
-                <div>
-                    <button type="button" class="btn btn-secondary" onclick="loadRandomIds()" style="width: auto;">
-                        🎲 Загрузить случайные ID
-                    </button>
-                    <div class="random-ids" id="randomIds"></div>
-                </div>
-            </form>
-
-            <div class="loader" id="loader">
-                <div class="spinner"></div>
-                <div class="loader-text">Анализируем данные клиента...</div>
+                <button class="btn" onclick="predictIncome()">
+                    Прогнозировать доход
+                </button>
             </div>
 
-            <div class="error" id="error"></div>
+            <div style="margin-top: 20px;">
+                <button class="btn btn-secondary" onclick="loadRandomIds()">
+                    🎲 Показать случайные ID
+                </button>
+            </div>
+
+            <div id="randomIds" class="random-ids"></div>
         </div>
 
-        <div id="results" class="result">
+        <div class="loader" id="loader">
+            <div class="spinner"></div>
+            <div class="loader-text">Анализируем данные и строим прогноз...</div>
+        </div>
+
+        <div class="result" id="result">
             <div class="card">
                 <div class="income-display">
                     <h2>Прогнозируемый доход клиента</h2>
-                    <div class="income-amount" id="incomeAmount">0 ₽</div>
-                    <div class="model-info" id="modelInfo">Hybrid Model</div>
+                    <div class="income-amount" id="incomeAmount">—</div>
+                    <div class="model-info" id="modelInfo">Hybrid Model: FT-Transformer + CatBoost</div>
                 </div>
 
-                <div class="client-info" id="clientInfo" style="display: none;">
-                    <h3>📋 Основные параметры клиента</h3>
-                    <div class="client-params" id="clientParams"></div>
+                <div class="visualization-section" id="visualizationSection">
+                    <h3>📊 Визуализация влияния факторов</h3>
+                    <p style="color: #666; margin-bottom: 20px;">
+                        График показывает важность каждого признака для прогнозирования дохода клиента
+                    </p>
+                    <img id="importancePlot" class="importance-plot" src="" alt="Feature importance visualization" />
                 </div>
 
+                <div style="margin-top: 30px;">
+                    <h3 style="margin-bottom: 20px;">🎯 Ключевые факторы влияния на прогноз</h3>
+                    <p style="color: #666; margin-bottom: 20px;">
+                        Модель анализирует следующие характеристики клиента для определения уровня дохода:
+                    </p>
+                    <div class="features-list" id="featuresList"></div>
+                </div>
+            </div>
+
+            <div class="card">
                 <h2>💼 Персонализированные финансовые предложения</h2>
-                <div class="offers" id="offers"></div>
+                <p style="color: #666; margin-bottom: 20px;">
+                    На основе прогноза дохода мы подобрали оптимальные финансовые продукты:
+                </p>
+                <div class="offers-grid" id="offersGrid"></div>
             </div>
         </div>
     </div>
 
     <script>
-        // Загрузить случайные ID при загрузке страницы
-        document.addEventListener('DOMContentLoaded', function() {
-            loadRandomIds();
-        });
-
-        // Загрузить случайные ID клиентов
         async function loadRandomIds() {
             try {
                 const response = await fetch('/clients/random');
                 const data = await response.json();
 
                 const container = document.getElementById('randomIds');
-                container.innerHTML = data.ids.map(id =>
-                    `<div class="id-chip" onclick="selectClient(${id})">ID: ${id}</div>`
-                ).join('');
+                container.innerHTML = '<p style="margin-bottom: 10px; color: #666; font-weight: 600;">Кликните на ID для быстрого выбора:</p>';
 
+                data.ids.forEach(id => {
+                    const chip = document.createElement('div');
+                    chip.className = 'id-chip';
+                    chip.textContent = `ID: ${id}`;
+                    chip.onclick = () => {
+                        document.getElementById('clientId').value = id;
+                        predictIncome();
+                    };
+                    container.appendChild(chip);
+                });
             } catch (error) {
                 console.error('Error loading random IDs:', error);
             }
         }
 
-        // Выбрать клиента по клику на ID
-        function selectClient(id) {
-            document.getElementById('clientId').value = id;
-            // Автоматически отправляем форму
-            document.getElementById('predictionForm').dispatchEvent(new Event('submit'));
-        }
-
-        // Обработка формы
-        document.getElementById('predictionForm').addEventListener('submit', async (e) => {
-            e.preventDefault();
-
+        async function predictIncome() {
             const clientId = document.getElementById('clientId').value;
 
             if (!clientId) {
-                showError('Пожалуйста, введите ID клиента');
+                alert('Пожалуйста, введите ID клиента');
                 return;
             }
 
             // Показываем loader
             document.getElementById('loader').classList.add('show');
-            document.getElementById('submitBtn').disabled = true;
-            document.getElementById('results').classList.remove('show');
-            document.getElementById('error').classList.remove('show');
+            document.getElementById('result').classList.remove('show');
 
             try {
-                // Отправляем запрос на предсказание
                 const response = await fetch('/predict', {
                     method: 'POST',
                     headers: {
-                        'Content-Type': 'application/json'
+                        'Content-Type': 'application/json',
                     },
-                    body: JSON.stringify({ client_id: clientId })
+                    body: JSON.stringify({ client_id: parseInt(clientId) })
                 });
 
-                if (!response.ok) {
-                    const errorData = await response.json();
-                    throw new Error(errorData.error || 'Ошибка при предсказании');
+                const data = await response.json();
+
+                if (response.ok) {
+                    displayResults(data);
+                } else {
+                    throw new Error(data.error || 'Unknown error');
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                document.getElementById('loader').classList.remove('show');
+                alert('Ошибка: ' + error.message);
+            }
+        }
+
+        function displayResults(data) {
+            // Скрываем loader, показываем результаты
+            document.getElementById('loader').classList.remove('show');
+            document.getElementById('result').classList.add('show');
+
+            // Отображаем доход
+            document.getElementById('incomeAmount').textContent = data.predicted_income_formatted;
+            document.getElementById('modelInfo').textContent = data.model_type;
+
+            // Отображаем график важности признаков
+            if (data.importance_plot) {
+                document.getElementById('importancePlot').src = 'data:image/png;base64,' + data.importance_plot;
+                document.getElementById('visualizationSection').style.display = 'block';
+            } else {
+                document.getElementById('visualizationSection').style.display = 'none';
+            }
+
+            // Отображаем топ-признаки
+            const featuresList = document.getElementById('featuresList');
+            featuresList.innerHTML = '';
+
+            data.top_features.slice(0, 8).forEach(feature => {
+                const item = document.createElement('div');
+                item.className = 'feature-item';
+                item.innerHTML = `
+                    <div class="feature-info">
+                        <div class="feature-name">${feature.name}</div>
+                        <div class="feature-explanation">${feature.explanation || ''}</div>
+                    </div>
+                    <div class="feature-importance">
+                        ${feature.normalized_importance.toFixed(1)}%
+                    </div>
+                `;
+                featuresList.appendChild(item);
+            });
+
+            // Отображаем предложения
+            const offersGrid = document.getElementById('offersGrid');
+            offersGrid.innerHTML = '';
+
+            data.offers.forEach(offer => {
+                const card = document.createElement('div');
+                card.className = 'offer-card';
+
+                let detailsHtml = '';
+                for (const [key, value] of Object.entries(offer.details)) {
+                    detailsHtml += `
+                        <div class="detail-row">
+                            <span class="detail-label">${key}:</span>
+                            <span class="detail-value">${value}</span>
+                        </div>
+                    `;
                 }
 
-                const result = await response.json();
-
-                // Показываем результаты
-                displayResults(result);
-
-            } catch (error) {
-                showError(error.message);
-            } finally {
-                document.getElementById('loader').classList.remove('show');
-                document.getElementById('submitBtn').disabled = false;
-            }
-        });
-
-        function displayResults(result) {
-            // Доход
-            document.getElementById('incomeAmount').textContent = result.predicted_income_formatted;
-            document.getElementById('modelInfo').textContent = result.model_type || 'Hybrid Model';
-
-            // Информация о клиенте
-            if (result.client_data) {
-                const clientInfo = document.getElementById('clientInfo');
-                const clientParams = document.getElementById('clientParams');
-
-                clientParams.innerHTML = Object.entries(result.client_data).map(([key, value]) => `
-                    <div class="param-item">
-                        <span class="param-label">${key}:</span>
-                        <span class="param-value">${value}</span>
-                    </div>
-                `).join('');
-
-                clientInfo.style.display = 'block';
-            }
-
-            // Предложения
-            const offersHtml = result.offers.map(offer => `
-                <div class="offer-card">
+                card.innerHTML = `
                     <div class="offer-icon">${offer.icon}</div>
+                    <div class="offer-type">${offer.type}</div>
                     <div class="offer-title">${offer.title}</div>
                     <div class="offer-description">${offer.description}</div>
-                    <div class="offer-rate">${offer.interest_rate}</div>
                     <div class="offer-details">
-                        ${Object.entries(offer.details).map(([key, value]) => `
-                            <div class="offer-detail-item">
-                                <span class="detail-label">${key}</span>
-                                <span class="detail-value">${value}</span>
-                            </div>
-                        `).join('')}
+                        ${detailsHtml}
                     </div>
-                </div>
-            `).join('');
+                `;
+                offersGrid.appendChild(card);
+            });
 
-            document.getElementById('offers').innerHTML = offersHtml;
-
-            // Показываем результаты
-            document.getElementById('results').classList.add('show');
-
-            // Прокручиваем к результатам
-            setTimeout(() => {
-                document.getElementById('results').scrollIntoView({ behavior: 'smooth', block: 'start' });
-            }, 100);
+            // Плавная прокрутка к результатам
+            document.getElementById('result').scrollIntoView({
+                behavior: 'smooth',
+                block: 'start'
+            });
         }
 
-        function showError(message) {
-            const errorDiv = document.getElementById('error');
-            errorDiv.textContent = '❌ ' + message;
-            errorDiv.classList.add('show');
+        // Загружаем случайные ID при загрузке страницы
+        window.onload = () => {
+            loadRandomIds();
+        };
 
-            setTimeout(() => {
-                errorDiv.classList.remove('show');
-            }, 5000);
-        }
+        // Enter для отправки
+        document.getElementById('clientId').addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                predictIncome();
+            }
+        });
     </script>
 </body>
 </html>
@@ -1087,21 +1326,36 @@ def create_templates():
     with open('templates/index.html', 'w', encoding='utf-8') as f:
         f.write(index_html)
 
-    print("✓ HTML templates created")
+    print("✓ HTML шаблон создан")
 
 
 if __name__ == '__main__':
+    print("=" * 60)
+    print("ЗАПУСК ВЕБА С AI-ПРОГНОЗИРОВАНИЕМ И ВИЗУАЛИЗАЦИЕЙ")
+    print("=" * 60)
+
     # Создаем шаблоны
     create_templates()
 
     # Загружаем модель
-    load_hybrid_model()
+    load_hybrid_model(
+        embedder_path='hybrid_model_embedder.pth',
+        catboost_path='hybrid_model.cbm'
+    )
 
     # Загружаем тестовую выборку
-    load_test_data()
+    load_test_data('hackathon_income_test.csv')
 
-    # Запускаем сервер
-    print("\n" + "="*60)
-    print("🚀 Запуск веб-приложения...")
-    print("="*60)
+    print("\n" + "=" * 60)
+    print("✓ Сервер готов к работе!")
+    print("=" * 60)
+    print("\n📱 Откройте в браузере: http://localhost:5000")
+    print("\nДоступные функции:")
+    print("  ✓ Прогноз дохода клиента")
+    print("  ✓ Визуализация важности признаков (Feature Importance)")
+    print("  ✓ Текстовая интерпретация ('почему доход = X')")
+    print("  ✓ Автоматическая генерация финансовых предложений")
+    print("  ✓ Выбор клиента по ID из базы")
+    print("\n" + "=" * 60 + "\n")
+
     app.run(debug=True, host='0.0.0.0', port=5000)

@@ -1,0 +1,25 @@
+{
+  "n_num_features": 208,
+  "cat_cardinalities": [
+    6,
+    2,
+    86,
+    63,
+    16,
+    25,
+    17,
+    9,
+    15,
+    9,
+    89,
+    43,
+    58,
+    92
+  ],
+  "d_token": 192,
+  "n_layers": 4,
+  "n_heads": 8,
+  "d_ffn": 500,
+  "dropout": 0.2,
+  "attention_dropout": 0.3
+}

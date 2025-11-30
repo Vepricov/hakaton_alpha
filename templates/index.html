@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="ru">
 <head>
@@ -14,12 +13,11 @@
 
         body {
             font-family: 'Segoe UI', Roboto, -apple-system, BlinkMacSystemFont, sans-serif;
-            background: #FFFFFF;
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
             min-height: 100vh;
             color: #1A1A1A;
         }
 
-        /* Header с красным фоном Альфа-Банка */
         .header {
             background: linear-gradient(135deg, #EF3124 0%, #C41E3A 100%);
             color: white;
@@ -62,7 +60,6 @@
             padding: 0 20px;
         }
 
-        /* Карточки с тенью */
         .card {
             background: white;
             border-radius: 20px;
@@ -77,13 +74,6 @@
             margin-bottom: 25px;
             font-size: 1.8em;
             font-weight: 600;
-        }
-
-        /* Секция выбора клиента */
-        .client-selector {
-            display: grid;
-            grid-template-columns: 1fr;
-            gap: 20px;
         }
 
         .input-group {
@@ -104,7 +94,7 @@
             font-size: 0.95em;
         }
 
-        input[type="number"], input[type="text"] {
+        input[type="number"] {
             width: 100%;
             padding: 15px 20px;
             border: 2px solid #E0E0E0;
@@ -120,7 +110,6 @@
             box-shadow: 0 0 0 4px rgba(239, 49, 36, 0.1);
         }
 
-        /* Кнопки в стиле Альфа-Банка */
         .btn {
             background: linear-gradient(135deg, #EF3124 0%, #C41E3A 100%);
             color: white;
@@ -144,12 +133,6 @@
             transform: translateY(0);
         }
 
-        .btn:disabled {
-            opacity: 0.6;
-            cursor: not-allowed;
-            transform: none;
-        }
-
         .btn-secondary {
             background: #1A1A1A;
             box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
@@ -160,7 +143,6 @@
             box-shadow: 0 6px 20px rgba(0, 0, 0, 0.3);
         }
 
-        /* Случайные ID */
         .random-ids {
             display: flex;
             gap: 10px;
@@ -185,7 +167,6 @@
             box-shadow: 0 4px 10px rgba(239, 49, 36, 0.3);
         }
 
-        /* Информационный блок */
         .info-box {
             background: linear-gradient(135deg, #FFF5F5 0%, #FFE8E8 100%);
             border-left: 4px solid #EF3124;
@@ -202,7 +183,6 @@
             flex-shrink: 0;
         }
 
-        /* Loader */
         .loader {
             display: none;
             text-align: center;
@@ -233,7 +213,6 @@
             font-size: 1.1em;
         }
 
-        /* Результаты */
         .result {
             display: none;
         }
@@ -254,7 +233,6 @@
             }
         }
 
-        /* Отображение дохода */
         .income-display {
             text-align: center;
             padding: 50px 30px;
@@ -307,191 +285,164 @@
             z-index: 1;
         }
 
-        /* Информация о клиенте */
-        .client-info {
-            background: #F8F8F8;
+        .visualization-section {
+            background: white;
+            padding: 30px;
+            border-radius: 16px;
+            margin-bottom: 30px;
+            text-align: center;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+        }
+
+        .visualization-section h3 {
+            color: #1A1A1A;
+            margin-bottom: 20px;
+            font-size: 1.4em;
+        }
+
+        .importance-plot {
+            max-width: 100%;
+            height: auto;
+            border-radius: 12px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+        }
+
+        .features-list {
+            display: grid;
+            gap: 15px;
+            margin-top: 20px;
+        }
+
+        .feature-item {
+            background: white;
             padding: 20px;
             border-radius: 12px;
-            margin-bottom: 30px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border: 2px solid #F0F0F0;
+            transition: all 0.3s;
         }
 
-        .client-info h3 {
-            margin-bottom: 15px;
+        .feature-item:hover {
+            border-color: #EF3124;
+            transform: translateY(-3px);
+            box-shadow: 0 8px 25px rgba(239, 49, 36, 0.15);
+        }
+
+        .feature-info {
+            flex: 1;
+        }
+
+        .feature-name {
+            font-weight: 700;
             color: #1A1A1A;
+            font-size: 1.1em;
+            margin-bottom: 8px;
         }
 
-        .client-params {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-            gap: 10px;
+        .feature-explanation {
+            color: #555;
+            font-size: 0.95em;
+            line-height: 1.5;
         }
 
-        .param-item {
-            background: white;
-            padding: 10px 15px;
-            border-radius: 8px;
-            font-size: 0.9em;
+        .feature-importance {
+            background: linear-gradient(135deg, #EF3124 0%, #C41E3A 100%);
+            color: white;
+            padding: 10px 20px;
+            border-radius: 25px;
+            font-weight: 700;
+            font-size: 1.15em;
+            min-width: 80px;
+            text-align: center;
+            box-shadow: 0 4px 10px rgba(239, 49, 36, 0.3);
         }
 
-        .param-label {
-            color: #666;
-            font-weight: 500;
-        }
-
-        .param-value {
-            color: #1A1A1A;
-            font-weight: 600;
-            margin-left: 5px;
-        }
-
-        /* Предложения */
-        .offers {
+        .offers-grid {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
             gap: 25px;
+            margin-top: 30px;
         }
 
         .offer-card {
-            background: linear-gradient(135deg, #FFFFFF 0%, #F8F8F8 100%);
+            background: white;
             border-radius: 16px;
             padding: 30px;
-            transition: all 0.3s;
             border: 2px solid #F0F0F0;
-            position: relative;
-            overflow: hidden;
-        }
-
-        .offer-card::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            height: 4px;
-            background: linear-gradient(90deg, #EF3124 0%, #C41E3A 100%);
-            transform: scaleX(0);
-            transition: transform 0.3s;
+            transition: all 0.3s;
+            cursor: pointer;
         }
 
         .offer-card:hover {
-            transform: translateY(-8px);
-            box-shadow: 0 15px 40px rgba(239, 49, 36, 0.15);
+            transform: translateY(-5px);
+            box-shadow: 0 15px 40px rgba(0, 0, 0, 0.12);
             border-color: #EF3124;
         }
 
-        .offer-card:hover::before {
-            transform: scaleX(1);
+        .offer-icon {
+            font-size: 3em;
+            margin-bottom: 15px;
         }
 
-        .offer-icon {
-            font-size: 3.5em;
-            margin-bottom: 15px;
-            display: block;
+        .offer-type {
+            color: #EF3124;
+            font-size: 0.85em;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 10px;
         }
 
         .offer-title {
-            font-size: 1.4em;
+            font-size: 1.3em;
             font-weight: 700;
             color: #1A1A1A;
-            margin-bottom: 12px;
+            margin-bottom: 10px;
         }
 
         .offer-description {
             color: #666;
-            margin-bottom: 15px;
-            line-height: 1.5;
-        }
-
-        .offer-rate {
-            color: #EF3124;
-            font-weight: 700;
-            font-size: 1.1em;
             margin-bottom: 20px;
+            line-height: 1.6;
         }
 
         .offer-details {
-            background: white;
-            padding: 20px;
-            border-radius: 12px;
-            margin-top: 20px;
-            border: 1px solid #E8E8E8;
+            border-top: 1px solid #F0F0F0;
+            padding-top: 20px;
         }
 
-        .offer-detail-item {
+        .detail-row {
             display: flex;
             justify-content: space-between;
-            padding: 10px 0;
-            border-bottom: 1px solid #F0F0F0;
-        }
-
-        .offer-detail-item:last-child {
-            border-bottom: none;
+            margin-bottom: 10px;
+            font-size: 0.95em;
         }
 
         .detail-label {
             color: #666;
-            font-size: 0.9em;
         }
 
         .detail-value {
-            color: #1A1A1A;
             font-weight: 600;
-            text-align: right;
+            color: #1A1A1A;
         }
 
-        /* Error */
-        .error {
-            background: #FFF0F0;
-            color: #C41E3A;
-            padding: 20px;
-            border-radius: 12px;
-            margin-top: 20px;
-            display: none;
-            border-left: 4px solid #EF3124;
-        }
-
-        .error.show {
-            display: block;
-            animation: shake 0.5s;
-        }
-
-        @keyframes shake {
-            0%, 100% { transform: translateX(0); }
-            25% { transform: translateX(-10px); }
-            75% { transform: translateX(10px); }
-        }
-
-        /* Responsive */
         @media (max-width: 768px) {
-            .header {
-                padding: 30px 20px;
+            .input-group {
+                flex-direction: column;
             }
 
             .logo {
                 font-size: 2em;
             }
 
-            .tagline {
-                font-size: 1.1em;
-            }
-
-            .card {
-                padding: 25px;
-            }
-
-            .input-group {
-                flex-direction: column;
-            }
-
-            .btn {
-                width: 100%;
-            }
-
             .income-amount {
                 font-size: 2.5em;
             }
 
-            .offers {
+            .offers-grid {
                 grid-template-columns: 1fr;
             }
         }
@@ -501,201 +452,225 @@
     <div class="header">
         <div class="header-content">
             <div class="logo">Альфа-Банк</div>
-            <div class="tagline">AI-прогнозирование доходов клиентов</div>
-            <span class="badge">🚀 Hybrid Model: FT-Transformer + CatBoost</span>
+            <div class="tagline">AI-система прогнозирования доходов клиентов</div>
+            <div class="badge">🤖 Гибридная модель FT-Transformer + CatBoost</div>
         </div>
     </div>
 
     <div class="container">
         <div class="card">
+            <h2>🎯 Прогноз дохода клиента</h2>
+
             <div class="info-box">
-                <div class="info-icon">🎯</div>
+                <div class="info-icon">💡</div>
                 <div>
-                    <strong>Как это работает:</strong> Выберите клиента по ID из тестовой выборки, и наша гибридная модель
-                    (FT-Transformer + CatBoost) предскажет его доход и сформирует персонализированные финансовые предложения.
+                    <strong>Как это работает:</strong> Введите ID клиента из базы данных, и наша AI-модель
+                    спрогнозирует его доход, объяснит факторы влияния и предложит персонализированные финансовые продукты.
                 </div>
             </div>
 
-            <h2>Выберите клиента</h2>
-
-            <form id="predictionForm" class="client-selector">
-                <div class="input-group">
-                    <div class="form-group">
-                        <label for="clientId">🆔 ID клиента</label>
-                        <input type="number" id="clientId" placeholder="Введите ID клиента" required>
-                    </div>
-                    <button type="submit" class="btn" id="submitBtn">
-                        📊 Рассчитать доход
-                    </button>
+            <div class="input-group">
+                <div class="form-group">
+                    <label for="clientId">ID клиента</label>
+                    <input type="number" id="clientId" placeholder="Например: 12345" />
                 </div>
-
-                <div>
-                    <button type="button" class="btn btn-secondary" onclick="loadRandomIds()" style="width: auto;">
-                        🎲 Загрузить случайные ID
-                    </button>
-                    <div class="random-ids" id="randomIds"></div>
-                </div>
-            </form>
-
-            <div class="loader" id="loader">
-                <div class="spinner"></div>
-                <div class="loader-text">Анализируем данные клиента...</div>
+                <button class="btn" onclick="predictIncome()">
+                    Прогнозировать доход
+                </button>
             </div>
 
-            <div class="error" id="error"></div>
+            <div style="margin-top: 20px;">
+                <button class="btn btn-secondary" onclick="loadRandomIds()">
+                    🎲 Показать случайные ID
+                </button>
+            </div>
+
+            <div id="randomIds" class="random-ids"></div>
         </div>
 
-        <div id="results" class="result">
+        <div class="loader" id="loader">
+            <div class="spinner"></div>
+            <div class="loader-text">Анализируем данные и строим прогноз...</div>
+        </div>
+
+        <div class="result" id="result">
             <div class="card">
                 <div class="income-display">
                     <h2>Прогнозируемый доход клиента</h2>
-                    <div class="income-amount" id="incomeAmount">0 ₽</div>
-                    <div class="model-info" id="modelInfo">Hybrid Model</div>
+                    <div class="income-amount" id="incomeAmount">—</div>
+                    <div class="model-info" id="modelInfo">Hybrid Model: FT-Transformer + CatBoost</div>
                 </div>
 
-                <div class="client-info" id="clientInfo" style="display: none;">
-                    <h3>📋 Основные параметры клиента</h3>
-                    <div class="client-params" id="clientParams"></div>
+                <div class="visualization-section" id="visualizationSection">
+                    <h3>📊 Визуализация влияния факторов</h3>
+                    <p style="color: #666; margin-bottom: 20px;">
+                        График показывает важность каждого признака для прогнозирования дохода клиента
+                    </p>
+                    <img id="importancePlot" class="importance-plot" src="" alt="Feature importance visualization" />
                 </div>
 
+                <div style="margin-top: 30px;">
+                    <h3 style="margin-bottom: 20px;">🎯 Ключевые факторы влияния на прогноз</h3>
+                    <p style="color: #666; margin-bottom: 20px;">
+                        Модель анализирует следующие характеристики клиента для определения уровня дохода:
+                    </p>
+                    <div class="features-list" id="featuresList"></div>
+                </div>
+            </div>
+
+            <div class="card">
                 <h2>💼 Персонализированные финансовые предложения</h2>
-                <div class="offers" id="offers"></div>
+                <p style="color: #666; margin-bottom: 20px;">
+                    На основе прогноза дохода мы подобрали оптимальные финансовые продукты:
+                </p>
+                <div class="offers-grid" id="offersGrid"></div>
             </div>
         </div>
     </div>
 
     <script>
-        // Загрузить случайные ID при загрузке страницы
-        document.addEventListener('DOMContentLoaded', function() {
-            loadRandomIds();
-        });
-
-        // Загрузить случайные ID клиентов
         async function loadRandomIds() {
             try {
                 const response = await fetch('/clients/random');
                 const data = await response.json();
 
                 const container = document.getElementById('randomIds');
-                container.innerHTML = data.ids.map(id =>
-                    `<div class="id-chip" onclick="selectClient(${id})">ID: ${id}</div>`
-                ).join('');
+                container.innerHTML = '<p style="margin-bottom: 10px; color: #666; font-weight: 600;">Кликните на ID для быстрого выбора:</p>';
 
+                data.ids.forEach(id => {
+                    const chip = document.createElement('div');
+                    chip.className = 'id-chip';
+                    chip.textContent = `ID: ${id}`;
+                    chip.onclick = () => {
+                        document.getElementById('clientId').value = id;
+                        predictIncome();
+                    };
+                    container.appendChild(chip);
+                });
             } catch (error) {
                 console.error('Error loading random IDs:', error);
             }
         }
 
-        // Выбрать клиента по клику на ID
-        function selectClient(id) {
-            document.getElementById('clientId').value = id;
-            // Автоматически отправляем форму
-            document.getElementById('predictionForm').dispatchEvent(new Event('submit'));
-        }
-
-        // Обработка формы
-        document.getElementById('predictionForm').addEventListener('submit', async (e) => {
-            e.preventDefault();
-
+        async function predictIncome() {
             const clientId = document.getElementById('clientId').value;
 
             if (!clientId) {
-                showError('Пожалуйста, введите ID клиента');
+                alert('Пожалуйста, введите ID клиента');
                 return;
             }
 
             // Показываем loader
             document.getElementById('loader').classList.add('show');
-            document.getElementById('submitBtn').disabled = true;
-            document.getElementById('results').classList.remove('show');
-            document.getElementById('error').classList.remove('show');
+            document.getElementById('result').classList.remove('show');
 
             try {
-                // Отправляем запрос на предсказание
                 const response = await fetch('/predict', {
                     method: 'POST',
                     headers: {
-                        'Content-Type': 'application/json'
+                        'Content-Type': 'application/json',
                     },
-                    body: JSON.stringify({ client_id: clientId })
+                    body: JSON.stringify({ client_id: parseInt(clientId) })
                 });
 
-                if (!response.ok) {
-                    const errorData = await response.json();
-                    throw new Error(errorData.error || 'Ошибка при предсказании');
+                const data = await response.json();
+
+                if (response.ok) {
+                    displayResults(data);
+                } else {
+                    throw new Error(data.error || 'Unknown error');
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                document.getElementById('loader').classList.remove('show');
+                alert('Ошибка: ' + error.message);
+            }
+        }
+
+        function displayResults(data) {
+            // Скрываем loader, показываем результаты
+            document.getElementById('loader').classList.remove('show');
+            document.getElementById('result').classList.add('show');
+
+            // Отображаем доход
+            document.getElementById('incomeAmount').textContent = data.predicted_income_formatted;
+            document.getElementById('modelInfo').textContent = data.model_type;
+
+            // Отображаем график важности признаков
+            if (data.importance_plot) {
+                document.getElementById('importancePlot').src = 'data:image/png;base64,' + data.importance_plot;
+                document.getElementById('visualizationSection').style.display = 'block';
+            } else {
+                document.getElementById('visualizationSection').style.display = 'none';
+            }
+
+            // Отображаем топ-признаки
+            const featuresList = document.getElementById('featuresList');
+            featuresList.innerHTML = '';
+
+            data.top_features.slice(0, 8).forEach(feature => {
+                const item = document.createElement('div');
+                item.className = 'feature-item';
+                item.innerHTML = `
+                    <div class="feature-info">
+                        <div class="feature-name">${feature.name}</div>
+                        <div class="feature-explanation">${feature.explanation || ''}</div>
+                    </div>
+                    <div class="feature-importance">
+                        ${feature.normalized_importance.toFixed(1)}%
+                    </div>
+                `;
+                featuresList.appendChild(item);
+            });
+
+            // Отображаем предложения
+            const offersGrid = document.getElementById('offersGrid');
+            offersGrid.innerHTML = '';
+
+            data.offers.forEach(offer => {
+                const card = document.createElement('div');
+                card.className = 'offer-card';
+
+                let detailsHtml = '';
+                for (const [key, value] of Object.entries(offer.details)) {
+                    detailsHtml += `
+                        <div class="detail-row">
+                            <span class="detail-label">${key}:</span>
+                            <span class="detail-value">${value}</span>
+                        </div>
+                    `;
                 }
 
-                const result = await response.json();
-
-                // Показываем результаты
-                displayResults(result);
-
-            } catch (error) {
-                showError(error.message);
-            } finally {
-                document.getElementById('loader').classList.remove('show');
-                document.getElementById('submitBtn').disabled = false;
-            }
-        });
-
-        function displayResults(result) {
-            // Доход
-            document.getElementById('incomeAmount').textContent = result.predicted_income_formatted;
-            document.getElementById('modelInfo').textContent = result.model_type || 'Hybrid Model';
-
-            // Информация о клиенте
-            if (result.client_data) {
-                const clientInfo = document.getElementById('clientInfo');
-                const clientParams = document.getElementById('clientParams');
-
-                clientParams.innerHTML = Object.entries(result.client_data).map(([key, value]) => `
-                    <div class="param-item">
-                        <span class="param-label">${key}:</span>
-                        <span class="param-value">${value}</span>
-                    </div>
-                `).join('');
-
-                clientInfo.style.display = 'block';
-            }
-
-            // Предложения
-            const offersHtml = result.offers.map(offer => `
-                <div class="offer-card">
+                card.innerHTML = `
                     <div class="offer-icon">${offer.icon}</div>
+                    <div class="offer-type">${offer.type}</div>
                     <div class="offer-title">${offer.title}</div>
                     <div class="offer-description">${offer.description}</div>
-                    <div class="offer-rate">${offer.interest_rate}</div>
                     <div class="offer-details">
-                        ${Object.entries(offer.details).map(([key, value]) => `
-                            <div class="offer-detail-item">
-                                <span class="detail-label">${key}</span>
-                                <span class="detail-value">${value}</span>
-                            </div>
-                        `).join('')}
+                        ${detailsHtml}
                     </div>
-                </div>
-            `).join('');
+                `;
+                offersGrid.appendChild(card);
+            });
 
-            document.getElementById('offers').innerHTML = offersHtml;
-
-            // Показываем результаты
-            document.getElementById('results').classList.add('show');
-
-            // Прокручиваем к результатам
-            setTimeout(() => {
-                document.getElementById('results').scrollIntoView({ behavior: 'smooth', block: 'start' });
-            }, 100);
+            // Плавная прокрутка к результатам
+            document.getElementById('result').scrollIntoView({
+                behavior: 'smooth',
+                block: 'start'
+            });
         }
 
-        function showError(message) {
-            const errorDiv = document.getElementById('error');
-            errorDiv.textContent = '❌ ' + message;
-            errorDiv.classList.add('show');
+        // Загружаем случайные ID при загрузке страницы
+        window.onload = () => {
+            loadRandomIds();
+        };
 
-            setTimeout(() => {
-                errorDiv.classList.remove('show');
-            }, 5000);
-        }
+        // Enter для отправки
+        document.getElementById('clientId').addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                predictIncome();
+            }
+        });
     </script>
 </body>
 </html>
