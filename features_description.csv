@@ -1,0 +1,225 @@
+признак;описание
+dt;Дата актуальности признаков
+target;таргет
+turn_cur_cr_avg_act_v2;Средний текущий кредитовый оборот по текущим счетам за 12 месяцев
+salary_6to12m_avg;Усреднённая ЗП клиента за окно в минимум 6 месяцев и максимум 12 месяцев
+hdb_bki_total_max_limit;БКИ: Максимальный кредитный лимит по любому продукту за все время
+dp_ils_paymentssum_avg_12m;данные цифрового профиля
+hdb_bki_total_cc_max_limit;БКИ: Максимальный лимит по кредитному продукту Кредитная карта за все время
+incomeValue;Значение дохода абонента
+gender;Пол клиента
+avg_cur_cr_turn;Средний кредитовый оборот по текущим счетам за 3 месяца
+adminarea;Регион клиента по geo cross model
+turn_cur_cr_avg_v2;Средний кредитовый оборот по текущим счетам за 12 месяцев
+turn_cur_cr_max_v2;Максимальный кредитовый оборот по текущим счетам за 12 месяцев
+hdb_bki_total_pil_max_limit;БКИ: Максимальный лимит по кредитному продукту Кредит за все время
+age;Возраст клиента
+dp_ils_avg_salary_1y;данные цифрового профиля
+turn_cur_cr_sum_v2;Общий кредитовый оборот по текущим счетам за 12 месяцев
+by_category__amount__sum__eoperation_type_name__ishodjaschij_bystryj_platezh_sbp;Средняя сумма электронных операций в категории - Исходящий быстрый платеж СБП за месяц на протяжении года
+turn_cur_db_sum_v2;Общий дебетовый оборот по текущим счетам за 12 месяцев
+turn_cur_db_avg_act_v2;Средний текущий дебетовый оборот по текущим счетам за 12 месяцев
+dp_ils_avg_salary_2y;данные цифрового профиля
+curr_rur_amt_cm_avg;Среднее за 12 месяцев среднемесячных остатков на группе счетов Основные текущие счета
+turn_cur_db_avg_v2;Средний дебетовый оборот по текущим счетам за 12 месяцев
+by_category__amount__sum__eoperation_type_name__vhodjaschij_bystryj_platezh_sbp;Средняя сумма электронных операций в категории - Входящий быстрый платеж СБП за месяц на протяжении года
+dp_ils_paymentssum_avg_6m;данные цифрового профиля
+avg_cur_db_turn;Средний дебетовый оборот по текущим счетам за 3 месяца
+hdb_bki_active_cc_max_limit;БКИ: Максимальный лимит по активному кредитному продукту Кредитная карта
+incomeValueCategory;Категория дохода абонента
+avg_by_category__amount__sum__cashflowcategory_name__vydacha_nalichnyh_v_bankomate;Средняя сумма транзакций в категории Выдача наличных в банкомате за месяц на протяжении года
+avg_credit_turn_rur;Средний кредитовый оборот по всем счетам за 3 месяца
+dp_ils_salary_ratio_1y3y;данные цифрового профиля
+by_category__amount__sum__eoperation_type_name__perevod_po_nomeru_telefona;Средняя сумма электронных операций в категории - Перевод по номеру телефона за месяц на протяжении года
+turn_cur_cr_7avg_avg_v2;Средний кредитовый оборот за последние 7 дней по текущим счетам
+dp_ils_accpayment_avg_12m;данные цифрового профиля
+curbal_usd_amt_cm_avg;Средний баланс текущих счетов за последние 3 месяца
+avg_by_category__amount__sum__cashflowcategory_name__supermarkety;Средняя сумма транзакций в категории Супермаркеты за месяц на протяжении года
+avg_loan_cnt_with_insurance;Среднее число кредитов наличными со страховкой, начиная с 2018 года
+avg_by_category__amount__sum__cashflowcategory_name__gipermarkety;Средняя сумма транзакций в категории Гипермаркеты за месяц на протяжении года
+city_smart_name;Город клиента по методике SMART
+uniV5;Скоринг-отчет для банка V5
+turn_cur_db_max_v2;Максимальный дебетовый оборот по текущим счетам за 12 месяцев
+avg_by_category__amount__sum__cashflowcategory_name__kafe;Средняя сумма транзакций в категории Кафе за месяц на протяжении года
+turn_other_db_max_v2;Максимальный дебетовый оборот по другим счетам за 12 месяцев
+turn_cur_cr_min_v2;Минимальный кредитовый оборот по текущим счетам за 12 месяцев
+hdb_bki_other_active_pil_outstanding;БКИ: Суммарная задолженность по крединым продуктам Кредит в других банках
+dp_ewb_last_employment_position;данные цифрового профиля
+turn_cur_db_min_v2;Минимальный дебетовый оборот по текущим счетам за 12 месяцев
+hdb_bki_total_products;БКИ: Число кредитных продуктов, в которых клиент является основным заемщиком
+per_capita_income_rur_amt;Среднедушевой доход в регионе клиента по Росстату
+avg_debet_turn_rur;Средний дебетовый оборот по всем счетам за 3 месяца
+hdb_relend_active_max_psk;БКИ: Максимальная ПСК по активным кредитным продуктам клиента Кредит наличным, Кредитная карта, Микрокредит, Другой
+dda_rur_amt_curr_v2;Сумма средств клиента на группе счетов Счета до востребования
+mob_cnt_days;Количество дней, в которые клиент заходил в Альфа-Мобайл за 90 дней
+dp_ils_days_from_last_doc;данные цифрового профиля
+avg_6m_money_transactions;Средние за 6 месяцев траты по группе MCC кодов: Финансовые услуги
+transaction_category_supermarket_percent_cnt_2m;Доля количества транзакций в категории Супермаркеты от общего количества транзакций за 2 месяца
+pil;Количество кредитов наличными
+hdb_bki_total_max_overdue_sum;БКИ: Максимальная сумма просрочки за все время на клиента
+avg_6m_clothing;Средние за 6 месяцев траты по группе MCC кодов: Одежда
+avg_by_category__amount__sum__cashflowcategory_name__elektronnye_dengi;Средняя сумма транзакций в категории Электронные деньги за месяц на протяжении года
+addrref;Регион отделения
+bki_total_auto_cnt;Количество кредитных продуктов Автокредит за все время
+dp_payoutincomedata_payout_avg_3_month;данные цифрового профиля
+hdb_outstand_sum;БКИ: Сумма задолженности
+avg_3m_money_transactions;Средние за 3 месяца траты по группе MCC кодов: Финансовые услуги
+dp_address_unique_regions;данные цифрового профиля
+min_balance_rur_amt_6m_af;Минимальный баланс за последние 6 месяцев по всем фабрикам
+transaction_category_supermarket_sum_cnt_m3_4;Количество транзакций в категории Супермаркеты в интервале 3 ... 4 месяцев
+dp_payoutincomedata_payout_max_3_month;данные цифрового профиля
+hdb_bki_total_ip_max_limit;БКИ: Максимальный лимит по кредитному продукту Ипотека за все время
+hdb_bki_total_cnt;БКИ: Число обращений в БКИ по клиенту
+blacklist_flag;Флаг черного списка
+bki_total_oth_cnt;Количество кредитных продуктов Другой за все время
+dp_payoutincomedata_payout_sum_3_month;данные цифрового профиля
+hdb_relend_outstand_sum;БКИ: Сумма задолженности по продуктам Кредит наличным, Кредитная карта, Микрокредит, Другой
+total_rur_amt_cm_avg;Среднее за 12 месяцев среднемесячных остатков на группе счетов Собственные средства
+mob_cover_days;Количество дней, в течение которых клиент заходил в Альфа-Мобайле, поделенные на период 90 дней
+dp_payoutincomedata_payout_max_6_month;данные цифрового профиля
+label_Below_50k_share_r1;внешние данные
+turn_fdep_db_sum_v2;Общий дебетовый оборот по депозитным счетам за 12 месяцев
+dp_ils_accpayment_avg_6m_current;данные цифрового профиля
+transaction_category_cash_percent_amt_2m;Доля суммы транзакций в категории Cash от общей суммы транзакций за 2 месяца
+curr_rur_amt_3m_avg;Среднее за 3 месяца среднемесячных остатков на группе счетов Основные текущие счета
+transaction_category_restaurants_sum_amt_m2;Сумма транзакций в категории Рестораны за 2 месяца
+loan_cnt;Число кредитов наличными у клиента, начиная с 2018 года
+turn_fdep_db_avg_v2;Средний дебетовый оборот по депозитным счетам за 12 месяцев
+turn_cur_db_7avg_avg_v2;Средний дебетовый оборот за последние 7 дней по текущим счетам
+bki_total_ip_max_outstand;Максимальная задолженность по кредитному продукту Ипотека
+amount_by_category_90d__summarur_amt__sum__cashflowcategory_name__vydacha_nalichnyh_v_bankomate;Сумма транзакций за 90 дней в категории Выдача наличных в банкомате
+profit_income_out_rur_amt_12m;Средний операционный доход за 12 месяцев до даты расчета
+avg_6m_hotels;Средние за 6 месяцев траты по группе MCC кодов: Отели
+hdb_ovrd_sum;БКИ: Сумма просрочки
+dp_ils_total_seniority;данные цифрового профиля
+dp_ils_paymentssum_avg_6m_current;данные цифрового профиля
+smsInWavg6m;Средневзвешенное значение “среднемесячного кол-ва входящих сообщений абонентов Компании за 6 месяцев, включая отчетный” по группе общения
+avg_fdep_db_turn;Средний дебетовый оборот по депозитным счетам за 3 месяца
+device_iphone_avg;Доля сессий в Альфа-Мобайле с устройства iphone за период 90 дней
+by_category__amount__sum__eoperation_type_name__platezh_za_mobilnyj_cherez_ps;Средняя сумма электронных операций в категории - Платёж за мобильный через ПС за месяц на протяжении года
+avg_balance_rur_amt_1m_af;Средний баланс за последний месяц по всем фабрикам
+curr_rur_amt_cm_avg_period_days_ago_v2;Средняя сумма средств клиента на группе счетов Основные текущие счета за 2 месяца до даты расчета
+avg_by_category__amount__sum__cashflowcategory_name__oteli;Средняя сумма транзакций в категории Отели за месяц на протяжении года
+hdb_bki_total_ip_cnt;БКИ: Количество кредитных продуктов Ипотека за все время
+hdb_bki_active_cc_max_outstand;БКИ: Максимальная текущая задолженность по кредитному продукту Кредитная карта
+hdb_other_outstand_sum;БКИ: Сумма задолженности по крединым продуктам в других банках
+days_to_last_transaction;Количество дней до последней транзакции
+hdb_bki_total_pil_max_overdue;БКИ: Максимальная просрочка по кредитному продукту Кредит за все время
+vert_pil_last_credit_step_screen_view_3m;Количество событий вида 'Last Credit Step Screen View' за 3 месяца
+acard;Количество Альфа-карт
+bki_total_il_max_limit;Максимальный лимит по кредитному продукту Кредит
+other_credits_count;Количество кредитных продуктов в других банках
+tz_msk_timedelta;Таймзона относительно Москвы
+turn_save_db_min_v2;Минимальный дебетовый оборот по накопительным счетам за 12 месяцев
+profit_income_out_rur_amt_9m;Средний операционный доход за 9 месяцев до даты расчета
+dp_ils_ipkcurrentyear_currentyearpensfactor;данные цифрового профиля
+avg_by_category__amount__sum__cashflowcategory_name__odezhda;Средняя сумма транзакций в категории Одежда за месяц на протяжении года
+cntOnnRinCallAvg6m;Среднемесячное количество входящих звонков во внутрисетевом роуминге за 6 месяцев (включая отчетный месяц)
+dda_rur_amt_3m_avg;Среднее за 3 месяца среднемесячных остатков на группе счетов Счета до востребования
+winback_cnt;Количество раз возвращений в WinBack (возвращения клиента из состоятния оттока)
+salary_median_in_gex_r1;гео данные
+dp_payoutincomedata_payout_avg_prev_year;данные цифрового профиля
+avg_amount_daily_transactions_90d;Средняя дневная сумма транзакций за 90 дней
+vert_has_app_ru_tinkoff_investing;Наличие у клиента приложения Тинькоф Инвестиции
+transaction_category_supermarket_inc_cnt_2m;Количество транзакций в категории Супермаркеты за последние 2 месяца поделённое на среднее Количество транзакций в этой категории за 2 месяца (на протяжении года)
+vert_pil_sms_success_3m;Количество событий вида 'Sms Success' за 3 месяца
+min_balance_rur_amt_1m_af;Минимальный баланс за последний месяц по всем фабрикам
+dp_ils_max_seniority;данные цифрового профиля
+avg_by_category__amount__sum__cashflowcategory_name__set_supermarketov;Средняя сумма транзакций в категории Сеть супермаркетов за месяц на протяжении года
+label_500k_to_1M_share_r1;внешние данные
+avg_by_category__amount__sum__cashflowcategory_name__zarubezhnye_finansovye_operatsii;Средняя сумма транзакций в категории Зарубежные финансовые операции за месяц на протяжении года
+bki_total_products;Количество кредитных продуктов за все время на клиента
+avg_6m_all;Средние за 6 месяцев траты по всем группам MCC кодов
+dp_ils_avg_simultanious_jobs_5y;данные цифрового профиля
+dp_ewb_dismissal_due_contract_violation_by_lb_cnt;данные цифрового профиля
+summarur_1m_purch;Сумма покупок в текущем месяце
+diff_avg_cr_db_turn;Разница между средним кредитовым и дебетовым оборотом по счетам за 3 месяца
+dp_ils_cnt_changes_1y;данные цифрового профиля
+dp_ils_employeers_cnt_last_month;данные цифрового профиля
+dp_payoutincomedata_payout_avg_6_month;данные цифрового профиля
+dp_ewb_last_organization;данные цифрового профиля
+by_category__amount__sum__eoperation_type_name__perevod_mezhdu_svoimi_schetami;Средняя сумма электронных операций в категории - Перевод между своими счетами за месяц на протяжении года
+bki_active_auto_cnt;Количество активных кредитных продуктов Автокредит
+turn_other_cr_avg_act_v2;Средний текущий кредитовый оборот по другим счетам за 12 месяцев
+cntVoiceOutMob6m;Среднее значение “среднемесячного кол-ва исходящих звонков (onnet+offnet) абонента Компании за 6 месяцев, включая отчетный” по группе общения
+avg_by_category__amount__sum__cashflowcategory_name__puteshestvija;Средняя сумма транзакций в категории Путешествия за месяц на протяжении года
+loanacc_rur_amt_cm_avg;Среднее за 12 месяцев среднемесячных остатков на группе счетов Кредитные счета
+transaction_category_supermarket_sum_cnt_m2;Количество транзакций в категории Супермаркеты за 2 месяца
+transaction_category_supermarket_sum_amt_d15;Сумма транзакций в категории Супермаркеты за 15 дней
+avg_fdep_cr_turn;Средний кредитовый оборот по депозитным счетам за 3 месяца
+transaction_category_restaurants_percent_cnt_2m;Доля количества транзакций в категории Рестораны от общего количества транзакций за 2 месяца
+bki_total_max_limit;Максимальный кредитный лимит по любому продукту за все время
+avg_by_category__amount__sum__cashflowcategory_name__reklama_v_internete;Средняя сумма транзакций в категории Реклама в интернете за месяц на протяжении года
+transaction_category_restaurants_percent_amt_2m;Доля суммы транзакций в категории Рестораны от общей суммы транзакций за 2 месяца
+turn_fdep_db_avg_act_v2;Средний текущий дебетовый оборот по депозитным счетам за 12 месяцев
+dp_ils_accpayment_avg_6m;данные цифрового профиля
+turn_other_cr_sum_v2;Общий кредитовый оборот по другим счетам за 12 месяцев
+client_active_flag;Флаг активности клиента
+avg_by_category__amount__sum__cashflowcategory_name__produkty;Средняя сумма транзакций в категории Продукты за месяц на протяжении года
+curr_rur_amt_cm_avg_inc_v2;Разница средней суммы на Основных текущих счетах за текущий месяц на начало и конец 2х-месячного периода
+nonresident_flag;Признак нерезидента РФ
+avg_by_category__amount__sum__cashflowcategory_name__kosmetika;Средняя сумма транзакций в категории Косметика за месяц на протяжении года
+vert_has_app_ru_vtb_invest;Наличие у клиента приложения ВТБ Инвестиции
+dp_ils_avg_salary_3y;данные цифрового профиля
+hdb_bki_total_auto_max_limit;БКИ: Максимальный лимит по кредитному продукту Автокредит за все время
+days_after_last_request;Количество дней между датой расчета и event time - времени запроса к Beeline
+cntRegionTripsWavg1m;Средневзвешенное значение “кол-ва поездок в регионы России (не в Москву) абонента Компании” по группе общения за отчетный месяц
+vert_has_app_ru_cian_main;Наличие у клиента приложения ЦИАН
+loanacc_rur_amt_curr_v2;Сумма средств клиента на группе счетов Кредитные счета
+avg_3m_no_cat;Средние за 3 месяца траты по группе MCC кодов: Без категории
+vert_ghost_close_dpay3_last_days;Количество дней до последнего закрытия продукта призрака с темой 'Daily Pay'
+vert_has_app_ru_raiffeisennews;Наличие у клиента приложения Раффайзенбанка
+dp_ils_days_ip_share_5y;данные цифрового профиля
+avg_by_category__amount__sum__cashflowcategory_name__platezhi_cherez_internet;Средняя сумма транзакций в категории Платежи через интернет за месяц на протяжении года
+hdb_bki_total_micro_max_overdue;БКИ: Максимальная просрочка по кредитному продукту Микрокредит за все время
+bki_total_active_products;Количество активных кредитных продуктов на клиента
+by_category__amount__sum__eoperation_type_name__perevod_s_karty_na_kartu;Средняя сумма электронных операций в категории - Перевод с карты на карту за месяц на протяжении года
+calledCtnOutGroup;Размер группы общения по новому алгоритму при исходящих звонках/смс
+vert_pil_loan_application_success_3m;Количество событий вида 'Loan Application Success' за 3 месяца
+vert_pil_fee_discount_change_3m;Количество событий вида 'Fee Discount Change' за 3 месяца
+businessTelSubs;Кол-во абонентов из группы общения, имеющих значение «Business» в показателе «Класс устройства» (CLASS) на дату заявки
+profit_income_out_rur_amt_l2m;Операционный доход Profit3 (на месяц T-4) где Т -- месяц оттока
+avg_3m_healthcare_services;Средние за 3 месяца траты по группе MCC кодов: Медицинские услуги
+dp_ils_paymentssum_month_avg;данные цифрового профиля
+ovrd_sum;Сумма просрочки
+hdb_bki_total_active_products;БКИ: Количество активных кредитных продуктов на клиента
+hdb_bki_total_micro_cnt;БКИ: Количество кредитных продуктов Микрокредит за все время
+hdb_bki_active_pil_cnt;БКИ: Количество активных кредитных продуктов Кредит
+loan_cur_amt;Сумма запрашиваемого кредита
+mob_total_sessions;Количество сессий в Альфа-Мобайле за период 90 дней
+period_last_act_ad;Год-месяц последней активности в АД на текущую дату
+dp_ils_days_multiple_job_share_2y;данные цифрового профиля
+hdb_bki_total_cc_max_overdue;БКИ: Максимальная просрочка по кредитному продукту Кредитная карта за все время
+lifetimeComp;Время жизни абонента конкурента (с момента первого появления до даты заявки)
+hdb_bki_total_pil_last_days;БКИ: Количество дней с последнего оформленного кредитного продукта Кредит
+amount_by_category_90d__summarur_amt__sum__cashflowcategory_name__elektronnye_dengi;Сумма транзакций за 90 дней в категории Электронные деньги
+turn_save_cr_max_v2;Максимальный кредитовый оборот по накопительным счетам за 12 месяцев
+hdb_bki_active_pil_max_limit;БКИ: Максимальный лимит по активному кредитному продукту Кредит
+dp_ils_accpayment_avg_3m;данные цифрового профиля
+avg_6m_restaurants;Средние за 6 месяцев траты по группе MCC кодов: Рестораны, фастфуд
+hdb_bki_total_pil_cnt;БКИ: Количество кредитных продуктов Кредит за все время
+transaction_category_fastfood_percent_cnt_2m;Доля количества транзакций в категории Фаст Фуд от общего количества транзакций за 2 месяца
+hdb_bki_total_pil_max_del90;БКИ: Количество просрочек свыше 90 дней по кредитному продукту Кредит за все время
+accountsalary_out_flag;Признак наличия зарплатного счета у клиента на момент последней активности
+cntBlockWavg6m;Средневзвешенное среднемесячное количество блокировок любого типа за 6 месяцев
+express_rur_amt_cm_avg;Среднее за 12 месяцев среднемесячных остатков на группе счетов Экспресс счета
+loanacc_rur_amt_cm_avg_inc_v2;Разница средней суммы на Кредитных счетах за текущий месяц на начало и конец 2х-месячного периода
+hdb_bki_last_product_days;БКИ: Количество дней с оформления последнего кредитного продукта
+dp_ils_days_multiple_job_cnt_5y;данные цифрового профиля
+dp_ils_accpayment_month_avg;данные цифрового профиля
+cred_dda_rur_amt_3m_avg;Среднее за 3 месяца среднемесячных остатков на группе счетов Текущие счета кредитов
+avg_3m_all;Средние за 3 месяца траты по всем группам MCC кодов
+hdb_other_active_max_psk;БКИ: Максимальная ПСК по активным кредитным продуктам в других банках
+hdb_bki_other_active_ip_outstanding;БКИ: Суммарная задолженность по крединым продуктам Ипотека в других банках
+total_sum;Общая сумма просрочки за весь период нахождения в банке
+dp_ils_uniq_companies_1y;данные цифрового профиля
+avg_6m_travel;Средние за 6 месяцев траты по группе MCC кодов: Турагентства
+avg_6m_government_services;Средние за 6 месяцев траты по группе MCC кодов: Платежи в бюджет
+hdb_bki_active_cc_max_overdue;БКИ: Максимальная текущая просрочка по активному кредитному продукту Кредитная карта
+total_rur_amt_cm_avg_period_days_ago_v2;Средняя сумма средств клиента на группе счетов Собственные средства за 2 месяца до даты расчета
+label_Above_1M_share_r1;внешние данные
+transaction_category_supermarket_sum_cnt_d15;Количество транзакций в категории Супермаркеты за 15 дней
+max_balance_rur_amt_1m_af;Максимальный баланс за последний месяц по всем фабрикам
+id;id клиента
+w;вес
+first_salary_income;внешние данные

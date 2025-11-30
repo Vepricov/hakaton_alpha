@@ -1,0 +1,30 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+
+# Virtual Environment
+venv/
+env/
+ENV/
+
+# Jupyter Notebook
+.ipynb_checkpoints
+
+# Model files (если они большие)
+*.cbm
+*.pth
+
+# CatBoost
+catboost_info/
+
+# Data files (опционально, если они большие)
+# *.csv
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
